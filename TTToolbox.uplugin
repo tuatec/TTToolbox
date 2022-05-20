@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "TTToolbox",
+	"Description": "tuatec's toolbox for automated character integrations",
+	"Category": "Other",
+	"CreatedBy": "Achim Turan",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "TTToolbox",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
