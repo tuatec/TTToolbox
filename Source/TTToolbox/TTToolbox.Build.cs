@@ -38,6 +38,7 @@ public class TTToolbox : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"ApplicationCore"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
