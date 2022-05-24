@@ -26,6 +26,8 @@ public class TTToolbox : ModuleRules
 			new string[]
 			{
 				"Core",
+				"AnimationModifiers",
+				"AnimationBlueprintLibrary",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
