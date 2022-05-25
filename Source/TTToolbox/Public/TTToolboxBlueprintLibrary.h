@@ -30,4 +30,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool HasSocket(const FName& SocketName, USkeleton* Skeleton);
+
+
+	// skeleton functions
+
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool DumpSkeletonCurveNames(USkeleton* Skeleton);
+
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool CheckForMissingCurveNames(const TArray<FName>& CurveNamesToCheck, USkeleton* Skeleton);
 };
