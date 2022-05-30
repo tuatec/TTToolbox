@@ -39,4 +39,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool CheckForMissingCurveNames(const TArray<FName>& CurveNamesToCheck, USkeleton* Skeleton);
+
+
+	// AnimMontage functions
+
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool CopyAnimMontageCurves(UAnimMontage* SourceAnimMontage, UAnimMontage* TargetAnimMontage);
 };

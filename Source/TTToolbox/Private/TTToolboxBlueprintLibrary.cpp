@@ -410,6 +410,56 @@ bool UTTToolboxBlueprintLibrary::CheckForMissingCurveNames(const TArray<FName>& 
   return hasNoMissingCurveNames;
 }
 
+static FName retrieveContainerNameForCurve(const UAnimSequenceBase* AnimaSequenceBase, const FName& CurveName)
+{
+  checkf(AnimaSequenceBase != nullptr, TEXT("Invalid Animation Sequence ptr"));
+  const FName Names[(int32)ESmartNameContainerType::SNCT_MAX] = { USkeleton::AnimCurveMappingName, USkeleton::AnimTrackCurveMappingName };
+  for (int32 Index = 0; Index < (int32)ESmartNameContainerType::SNCT_MAX; ++Index)
+  {
+    const FSmartNameMapping* CurveMapping = AnimaSequenceBase->GetSkeleton()->GetSmartNameContainer(Names[Index]);
+    if (CurveMapping && CurveMapping->Exists(CurveName))
+    {
+      return Names[Index];
+    }
+  }
+
+  return NAME_None;
+}
+
+bool UTTToolboxBlueprintLibrary::CopyAnimMontageCurves(UAnimMontage* SourceAnimMontage, UAnimMontage* TargetAnimMontage)
+{
+  // check input arguments
+  if (!IsValid(SourceAnimMontage) || !IsValid(TargetAnimMontage))
+  {
+    UE_LOG(LogTemp, Error, TEXT("Called \"CopyAnimMontageCurves\" with invalid SourceAnimMontage or TargetAnimMontage."));
+    return false;
+  }
+
+  // curves should be copied over so all existing curves need to be removed
+  auto& targetController = TargetAnimMontage->GetController();
+  targetController.RemoveAllCurvesOfType(ERawCurveTrackTypes::RCT_Float);
+
+  for (auto& sourceCurve : SourceAnimMontage->GetCurveData().FloatCurves)
+  {
+    FSmartName curveSmartName;
+
+    const FName containerName = retrieveContainerNameForCurve(TargetAnimMontage, sourceCurve.Name.DisplayName);
+    if (!TargetAnimMontage->GetSkeleton()->GetSmartNameByName(containerName, sourceCurve.Name.DisplayName, curveSmartName))
+    {
+      UE_LOG(LogTemp, Error, TEXT("Failed to get smart name for curve %s"), *sourceCurve.Name.DisplayName.ToString());
+      continue;
+    }
+
+    const FAnimationCurveIdentifier curveId(curveSmartName, ERawCurveTrackTypes::RCT_Float);
+    targetController.AddCurve(curveId);
+    targetController.SetCurveKeys(curveId, sourceCurve.FloatCurve.GetConstRefOfKeys());
+  }
+
+  // modify the TargetAnimMontage
+
+  return true;
+}
+
 // helper function implementations
 FString FVectorToString(const FVector& Vector)
 {
