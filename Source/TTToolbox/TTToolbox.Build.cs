@@ -28,6 +28,7 @@ public class TTToolbox : ModuleRules
 				"Core",
 				"AnimationModifiers",
 				"AnimationBlueprintLibrary",
+				"IKRig",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -40,6 +41,7 @@ public class TTToolbox : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"IKRigEditor",
 				"ApplicationCore"
 				// ... add private dependencies that you statically link with here ...	
 			}

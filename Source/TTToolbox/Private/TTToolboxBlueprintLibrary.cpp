@@ -2,6 +2,8 @@
 
 // Unreal Engine includes
 #include "Engine/SkeletalMeshSocket.h"
+#include "IKRigDefinition.h"
+#include "RigEditor/IKRigController.h"
 
 #if WITH_EDITOR
 #include "HAL/PlatformApplicationMisc.h"
@@ -458,6 +460,146 @@ bool UTTToolboxBlueprintLibrary::CopyAnimMontageCurves(UAnimMontage* SourceAnimM
   // modify the TargetAnimMontage
 
   return true;
+}
+
+bool UTTToolboxBlueprintLibrary::DumpIKChains(const UIKRigDefinition* IKRigDefinition)
+{
+  // check input arguments
+  if (!IsValid(IKRigDefinition))
+  {
+    UE_LOG(LogTemp, Error, TEXT("Called \"DumpIKChains\" with invalid IKRigDefinition."));
+    return false;
+  }
+
+  if (IKRigDefinition->GetRetargetChains().Num() <= 0)
+  {
+    UE_LOG(LogTemp, Error, TEXT("Called \"DumpIKChains\" with invalid IKRigDefinition %s, which did not provide any IK chains."), *(IKRigDefinition->GetFullName()));
+    return false;
+  }
+
+  // prepare the dump string
+  FString dumpString;
+  if (IKRigDefinition->GetRetargetChains().Num() > 1)
+  {
+    dumpString += "(";
+  }
+
+  // iterate over all IK chains
+  uint32 count = 0;
+  for (auto& boneChain : IKRigDefinition->GetRetargetChains())
+  {
+    if (count > 0)
+    {
+      dumpString += ",";
+    }
+
+    dumpString += "(";
+
+    dumpString += "ChainName=\"";
+    dumpString += boneChain.ChainName.ToString();
+    dumpString += "\",";
+
+    dumpString += "StartBone=\"";
+    dumpString += boneChain.StartBone.BoneName.ToString();
+    dumpString += "\",";
+
+    dumpString += "EndBone=\"";
+    dumpString += boneChain.EndBone.BoneName.ToString();
+    dumpString += "\",";
+
+    dumpString += "IKGoalName=\"";
+    dumpString += boneChain.IKGoalName.ToString();
+    dumpString += "\"";
+
+    dumpString += ")";
+
+    count++;
+  }
+
+  if (IKRigDefinition->GetRetargetChains().Num() > 1)
+  {
+    dumpString += ")";
+  }
+
+  // print the IK chains to the log
+  UE_LOG(LogTemp, Log, TEXT("%s"), *dumpString);
+
+  // store the IK chains in the clipboard
+#if WITH_EDITOR
+  FPlatformApplicationMisc::ClipboardCopy(*dumpString);
+#endif
+
+  return true;
+}
+
+bool UTTToolboxBlueprintLibrary::AddIKBoneChains(UIKRigDefinition* IKRigDefinition, const TArray<FBoneChain_BP>& BoneChains)
+{
+  // check input arguments
+  if (!IsValid(IKRigDefinition))
+  {
+    UE_LOG(LogTemp, Error, TEXT("Called \"AddIKBoneChains\" with invalid IKRigDefinition."));
+    return false;
+  }
+
+  auto ikRigController = UIKRigController::GetIKRigController(IKRigDefinition);
+  if (!IsValid(ikRigController))
+  {
+    UE_LOG(LogTemp, Error, TEXT("During getting the IKRigController for %s in \"AddIKBoneChains\" failed."), *(IKRigDefinition->GetFullName()));
+    return false;
+  }
+
+  // delete all existing retarget chains
+  {
+    //auto retargetChains = ikRigController->GetRetargetChains();
+    for (auto& retargetChain : ikRigController->GetRetargetChains())
+    {
+      if (!ikRigController->RemoveRetargetChain(retargetChain.ChainName))
+      {
+        UE_LOG(LogTemp, Error, TEXT("Removing %s retarget chain in \"AddIKBoneChains\" failed."), *(IKRigDefinition->GetFullName()));
+      }
+    }
+  }
+
+  // add the new IK chains
+  for (auto& boneChain : BoneChains)
+  {
+    if (IKRigDefinition->GetRetargetChainByName(boneChain.ChainName))
+    {
+      UE_LOG(LogTemp, Error, TEXT("Adding %s retarget chain in \"AddIKBoneChains\" failed."), *(IKRigDefinition->GetFullName()));
+      continue;
+    }
+
+    ikRigController->AddRetargetChain(boneChain.ChainName, boneChain.StartBone, boneChain.EndBone);
+  }
+
+  return true;
+}
+
+bool UTTToolboxBlueprintLibrary::SetIKBoneChainGoal(UIKRigDefinition* IKRigDefinition, const FName& ChainName, const FName& GoalName)
+{
+  // check input arguments
+  if (!IsValid(IKRigDefinition))
+  {
+    UE_LOG(LogTemp, Error, TEXT("Called \"SetIKBoneChainGoal\" with invalid IKRigDefinition."));
+    return false;
+  }
+
+  // get the IK rig controller
+  auto ikRigController = UIKRigController::GetIKRigController(IKRigDefinition);
+  if (!IsValid(ikRigController))
+  {
+    UE_LOG(LogTemp, Error, TEXT("During getting the IKRigController for %s in \"SetIKBoneChainGoal\" failed."), *(IKRigDefinition->GetFullName()));
+    return false;
+  }
+
+  // check if the ik chain is present in the IKRigDefinition
+  if (!ikRigController->GetGoal(GoalName))
+  {
+    return false;
+  }
+
+  // set the IK goal within the IK chain
+  return ikRigController->SetRetargetChainGoal(ChainName, GoalName);
 }
 
 // helper function implementations
