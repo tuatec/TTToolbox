@@ -1,15 +1,15 @@
 {
 	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "1.0",
+	"Version": 2,
+	"VersionName": "0.2",
 	"FriendlyName": "TTToolbox",
 	"Description": "tuatec's toolbox for automated character integrations",
-	"Category": "Other",
+	"Category": "Scripting",
 	"CreatedBy": "Achim Turan",
-	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
+	"CreatedByURL": "https://www.instagram.com/tuatec/",
+	"DocsURL": "https://youtube.com/playlist?list=PLslFX7TZAr8_kS1zdzEvrjBXI1gMRckZE",
+	"MarketplaceURL": "https://github.com/tuatec/TTToolbox/releases",
+	"SupportURL": "https://github.com/tuatec/TTToolbox/issues",
 	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
@@ -17,8 +17,14 @@
 	"Modules": [
 		{
 			"Name": "TTToolbox",
-			"Type": "Runtime",
+			"Type": "Editor",
 			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "IKRig",
+			"Enabled": true
 		}
 	]
 }
