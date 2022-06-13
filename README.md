@@ -9,6 +9,10 @@ This is where TTToolbox should join your table and help getting your character w
 
 If you want to know how the inital development started or want to know how the scripts work, you should follow the series [ALS Secrets - UE5 Manny Integration + Git Workflow](https://youtube.com/playlist?list=PLslFX7TZAr8_kS1zdzEvrjBXI1gMRckZE).
 
+Here is a user focused video series that shows how to use TTToolbox during the task of Paragon TwinBlast retargeting.
+The Truth of Retargeting in UE5 - Paragon TwinBlast
+https://www.youtube.com/playlist?list=PLslFX7TZAr89enRHIfJwUJJ_hJV8wX_8v
+
 # How to Build TTToolbox
 It's still very early for TTToolbox and this part is not yet covered within the series,
 [ALS Secrets - UE5 Manny Integration + Git Workflow](https://youtube.com/playlist?list=PLslFX7TZAr8_kS1zdzEvrjBXI1gMRckZE).
