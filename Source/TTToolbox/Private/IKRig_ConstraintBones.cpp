@@ -29,14 +29,39 @@ void UIKRig_ConstraintBones::Initialize(const FIKRigSkeleton& IKRigSkeleton)
 {
 	m_constraintBones.Reserve(ConstraintBones.Num());
 
+	bool errorsOccurred = false;
+
 	//! @todo @ffs sort bone indices
-	for (auto& constraintBone : ConstraintBones)
+	for (auto& constraint : ConstraintBones)
 	{
-		m_constraintBones.Add(
-			{
-				IKRigSkeleton.GetBoneIndexFromName(constraintBone.ConstraintBone),
-				IKRigSkeleton.GetBoneIndexFromName(constraintBone.ModifiedBone)
+		int32 constraintBone = IKRigSkeleton.GetBoneIndexFromName(constraint.ConstraintBone);
+		int32 modifiedBone = IKRigSkeleton.GetBoneIndexFromName(constraint.ModifiedBone);
+
+		if (constraintBone == INDEX_NONE)
+		{
+			errorsOccurred = true;
+			UE_LOG(LogTemp, Error, TEXT("Failed get get bone index for constaint bone %s"), *constraint.ConstraintBone.ToString());
+			continue;
+		}
+
+		if (modifiedBone == INDEX_NONE)
+		{
+			errorsOccurred = true;
+			UE_LOG(LogTemp, Error, TEXT("Failed get get bone index for constaint bone %s"), *constraint.ModifiedBone.ToString());
+			continue;
+		}
+
+			m_constraintBones.Add(
+				{
+					constraintBone,
+					modifiedBone
 			});
+	}
+
+	if (errorsOccurred)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Some constraint bones could not be set up, no constraining will be done. Please check the error messages above."));
+		m_constraintBones.Empty();
 	}
 }
 
