@@ -60,7 +60,8 @@ public class TTToolbox : ModuleRules
 				"Slate",
 				"SlateCore",
 				"IKRigEditor",
-				"ApplicationCore"
+				"ApplicationCore",
+				"RenderCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
