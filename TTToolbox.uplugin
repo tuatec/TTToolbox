@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
-	"Version": 3,
-	"VersionName": "0.3",
+	"Version": 4,
+	"VersionName": "0.4",
 	"FriendlyName": "TTToolbox",
 	"Description": "tuatec's toolbox for automated character integrations",
 	"Category": "Scripting",
