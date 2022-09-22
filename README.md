@@ -24,6 +24,8 @@ Then we will see how we can integrate them properly into TTToolbox.
 
 In case you found issues, please raise an issue [here](https://github.com/tuatec/TTToolbox/issues).
 
+In case you want to drop a feature, maybe consider to have a look at first for the [existing](https://github.com/tuatec/TTToolbox/labels/enhancement) ones and vote with a thumbs up.
+
 If you want to start a discussion about a specific topic, do not hesitate to do so in [discussions](https://github.com/tuatec/TTToolbox/discussions).
 
 Bugfixes are very welcome and will be reviewed as soon as possible.
