@@ -91,6 +91,18 @@ struct TTTOOLBOX_API FTTConstraintBone_BP
 	FName ConstraintBone = NAME_None;
 };
 
+USTRUCT(Blueprintable)
+struct TTTOOLBOX_API FTTBlendProfile_BP
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
+	EBlendProfileMode BlendProfileMode = EBlendProfileMode::BlendMask;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
+	TMap<FName, float> BlendValues;
+};
+
 UCLASS()
 class TTTOOLBOX_API UTTToolboxBlueprintLibrary : public UBlueprintFunctionLibrary
 {
@@ -126,6 +138,21 @@ public:
 	// checks if the given 'CurveNamesToCheck' are available in the given 'Skeleton' and prints the missing curves to the console
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool CheckForMissingCurveNames(const TArray<FName>& CurveNamesToCheck, USkeleton* Skeleton);
+
+	// returns true if the given 'SkeletonCurveName' exists in the specified 'Skeleton', otherwise false.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool HasSkeletonCurve(USkeleton* Skeleton, const FName& SkeletonCurveName);
+
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool DumpSkeletonBlendProfile(USkeleton* Skeleton);
+
+	// will add a new 'BlendProfile' to the given 'Skeleton' with the 'BlendProfileName'. If 'Overwrite' is set to true it will overwrite the already existing blend values otherwise returns with false.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool AddSkeletonBlendProfile(USkeleton* Skeleton, const FName& BlendProfileName, const FTTBlendProfile_BP& BlendProfile, bool Overwrite = false);
+
+	// adds the given 'SkeletonCurveName' to the specified 'Skeleton' and returns if successful, false if the given 'SkeletonCurveName' already exists
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool AddSkeletonCurve(USkeleton* Skeleton, const FName& SkeletonCurveName);
 
 	// adds the fiven 'NewBones' to the given 'Skeleton' and it's connected skeletal meshes.
 	// NOTE: Sadly Unreal Engine does come with lot's of assertions and it is very hard to implement this feature in a save way,

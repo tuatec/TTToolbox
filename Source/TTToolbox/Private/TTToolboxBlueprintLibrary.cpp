@@ -34,6 +34,8 @@
 #include "ARFilter.h"
 #include "AssetRegistryModule.h"
 
+#include "Animation/BlendProfile.h"
+
 #if WITH_EDITOR
 #include "HAL/PlatformApplicationMisc.h"
 #endif
@@ -464,6 +466,186 @@ bool UTTToolboxBlueprintLibrary::CheckForMissingCurveNames(const TArray<FName>& 
   }
 
   return hasNoMissingCurveNames;
+}
+
+bool UTTToolboxBlueprintLibrary::HasSkeletonCurve(USkeleton* Skeleton, const FName& SkeletonCurveName)
+{
+    // check input arguments
+    if (!IsValid(Skeleton))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"HasSkeletonCurve\" with invalid \"Skeleton\"."));
+        return false;
+    }
+
+    if (SkeletonCurveName.IsNone())
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"HasSkeletonCurve\" with invalid \"SkeletonCurveName\" (\"None\")."));
+        return false;
+    }
+
+    // get curve names from Skeleton
+    auto curveMapping = Skeleton->GetSmartNameContainer(USkeleton::AnimCurveMappingName);
+    if (!curveMapping)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to get curve mapping in \"DumpSkeletonCurveNames\". Please contact the author of this plugin."));
+        return false;
+    }
+
+    // is the SkeletonCurveName already present?
+    FSmartName outName;
+    return curveMapping->FindSmartName(SkeletonCurveName, outName);
+}
+
+bool UTTToolboxBlueprintLibrary::DumpSkeletonBlendProfile(USkeleton* Skeleton)
+{
+    // check input arguments
+    if (!IsValid(Skeleton))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"DumpSkeletonBlendProfile\" with invalid \"Skeleton\"."));
+        return false;
+    }
+
+    // convert blend profiles to a string
+    FString dumpString = "(";
+    uint32 count = 0;
+    for (auto& blendProfile : Skeleton->BlendProfiles)
+    {
+        if (!blendProfile)
+        {
+            UE_LOG(LogTemp, Error, TEXT("Found invalid blend profile while dumping. Please create an issue here https://github.com/tuatec/TTToolbox/issues"));
+            continue;
+        }
+
+        if (count > 0)
+        {
+            dumpString += ",(";
+        }
+        else
+        {
+            dumpString += "(";
+        }
+
+        // name
+        dumpString += "\"";
+#if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION < 1
+        dumpString += blendProfile->GetName();
+#elif ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION >= 1
+        dumpString += blendProfile.GetName();
+#endif
+        dumpString += "\", ";
+
+        if (blendProfile)
+        {
+            dumpString += "(";
+            dumpString += "BlendProfileMode=";
+            dumpString += UEnum::GetValueAsString<EBlendProfileMode>(blendProfile->GetMode()).Replace(TEXT("EBlendProfileMode::"), TEXT(""));
+
+            dumpString += ",BlendValues=(";
+            uint32 boneCount = 0;
+            for (auto& bone : blendProfile->ProfileEntries)
+            {
+                if (boneCount > 0)
+                {
+                    dumpString += ",";
+                }
+
+                dumpString += "(\"";
+                dumpString += bone.BoneReference.BoneName.ToString();
+                dumpString += "\", ";
+
+                dumpString += FString::SanitizeFloat(bone.BlendScale);
+                dumpString += ")";
+
+                boneCount++;
+            }
+
+            dumpString += ")";
+        }
+
+        dumpString += "))";
+
+        count++;
+    }
+    dumpString += ")";
+
+    // print dump string to the output log
+    UE_LOG(LogTemp, Log, TEXT("%s"), *dumpString);
+
+#if WITH_EDITOR
+    FPlatformApplicationMisc::ClipboardCopy(*dumpString);
+#endif
+
+    return true;
+}
+
+bool UTTToolboxBlueprintLibrary::AddSkeletonBlendProfile(USkeleton* Skeleton, const FName& BlendProfileName, const FTTBlendProfile_BP& BlendProfile, bool Overwrite)
+{
+    // check input arguments
+    if (!IsValid(Skeleton))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"AddSkeletonBlendProfile\" with invalid \"Skeleton\"."));
+        return false;
+    }
+
+    if (BlendProfileName.IsNone())
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"AddSkeletonBlendProfile\" with invalid \"BlendProfileName\" (\"None\")."));
+        return false;
+    }
+
+    // try to find a blend profile with the same name
+    auto blendProfile = Skeleton->GetBlendProfile(BlendProfileName);
+    if (blendProfile && !Overwrite)
+    { // if a blend profile was found and does not need to be overwriten, nothing is to do here
+        UE_LOG(LogTemp, Error, TEXT("The blend profile \"%s\" did already exist in Skeleton \"%s\" in case you want to overwrite the values set \"Overwrite\" to true."), *BlendProfileName.ToString());
+        return false;
+    }
+
+    // in case a blend profile was not found and a not existing one needs to be overwriten,
+    // a new blend profile is created
+    if (!blendProfile)
+    {
+        blendProfile = Skeleton->CreateNewBlendProfile(BlendProfileName);
+    }
+
+    // fill out blend profile with it's values
+    blendProfile->Mode = BlendProfile.BlendProfileMode;
+
+    blendProfile->ProfileEntries.Empty(BlendProfile.BlendValues.Num());
+    for (auto& blendEntry : BlendProfile.BlendValues)
+    {
+        int32 boneIndex = Skeleton->GetReferenceSkeleton().FindBoneIndex(blendEntry.Key);
+        if (boneIndex == INDEX_NONE)
+        {
+            UE_LOG(LogTemp, Error, TEXT("The bone name \"%s\" did not exist in Skeleton \"%s\" while trying to add the blend profile \"%s\"."),
+                   *blendEntry.Key.ToString(), *Skeleton->GetPathName(), *BlendProfileName.ToString());
+            continue;
+        }
+
+        blendProfile->SetBoneBlendScale(blendEntry.Key, blendEntry.Value, false, true);
+    }
+
+    return true;
+}
+
+bool UTTToolboxBlueprintLibrary::AddSkeletonCurve(USkeleton* Skeleton, const FName& SkeletonCurveName)
+{
+    // check input arguments
+    if (!IsValid(Skeleton))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"AddSkeletonCurve\" with invalid \"Skeleton\"."));
+        return false;
+    }
+
+    if (SkeletonCurveName.IsNone())
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"AddSkeletonCurve\" with invalid \"SkeletonCurveName\" (\"None\")."));
+        return false;
+    }
+
+    // add the SkeletonCurveName
+    FSmartName outName;
+    return Skeleton->AddSmartNameAndModify(USkeleton::AnimCurveMappingName, SkeletonCurveName, outName);
 }
 
 //! @todo @ffs check if the engine class could be used here
