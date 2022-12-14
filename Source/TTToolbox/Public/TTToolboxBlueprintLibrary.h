@@ -163,11 +163,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool AddSkeletonBlendProfile(USkeleton* Skeleton, const FName& BlendProfileName, const FTTBlendProfile_BP& BlendProfile, bool Overwrite = false);
 
-	// adds the given 'SkeletonCurveName' to the specified 'Skeleton' and returns if successful, false if the given 'SkeletonCurveName' already exists
+	// adds the given 'SkeletonCurveName' to the specified 'Skeleton' and returns if successful, false if the given 'SkeletonCurveName' already exists.
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool AddSkeletonCurve(USkeleton* Skeleton, const FName& SkeletonCurveName);
 
-	// dumps all groups and montages slots for the given 'Skeleton'.
+	// dumps all groups and montages slots for the given 'Skeleton'. Returns true on success, false otherwise.
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool DumpGroupsAndSlots(USkeleton* Skeleton);
 
