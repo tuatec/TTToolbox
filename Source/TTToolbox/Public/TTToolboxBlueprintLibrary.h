@@ -28,6 +28,8 @@
 // forward declarations
 class USkeleton;
 class UIKRigDefinition;
+class UControlRig;
+class UControlRigBlueprint;
 
 
 // Helper stucture that is exposed to Blueprints to be independent from the ik rig implementation.
@@ -190,6 +192,12 @@ public:
 	// the function removes all virtual bones and adds them after again after the root bone was added to the skeletal meshes.
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool AddRootBone(USkeleton* Skeleton);
+
+	// ControlRig functions
+
+	// updates the given 'ControlRigBlueprint' with the specified 'SkeletalMesh'. Returns true on success, false otherwise.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool UpdateControlRigBlueprintPreviewMesh(UControlRigBlueprint* ControlRigBlueprint, USkeletalMesh* SkeletalMesh);
 
 	// AnimMontage functions
 

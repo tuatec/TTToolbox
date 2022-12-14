@@ -34,6 +34,9 @@
 #include "ARFilter.h"
 #include "AssetRegistryModule.h"
 
+#include "ControlRigBlueprint.h"
+#include "ControlRig.h"
+
 #include "Animation/BlendProfile.h"
 
 #if WITH_EDITOR
@@ -1363,6 +1366,31 @@ static FName retrieveContainerNameForCurve(const UAnimSequenceBase* AnimaSequenc
   }
 
   return NAME_None;
+}
+
+bool UTTToolboxBlueprintLibrary::UpdateControlRigBlueprintPreviewMesh(UControlRigBlueprint* ControlRigBlueprint, USkeletalMesh* SkeletalMesh)
+{
+    if (!IsValid(ControlRigBlueprint))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"UpdateControlRigBlueprintPreviewMesh\" with invalid \"ControlRigBlueprint\"."));
+        return false;
+    }
+
+    if (!IsValid(SkeletalMesh))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"UpdateControlRigBlueprintPreviewMesh\" with invalid \"SkeletalMesh\"."));
+        return false;
+    }
+
+    ControlRigBlueprint->SetPreviewMesh(SkeletalMesh, true);
+
+    URigHierarchyController* controller = ControlRigBlueprint->GetHierarchyController();
+    check(controller);
+
+    controller->ImportBones(SkeletalMesh->GetSkeleton(), NAME_None, true, true, /*bSelectBones*/false, true, true);
+    controller->ImportCurves(SkeletalMesh->GetSkeleton(), NAME_None, false, true, true);
+
+    return true;
 }
 
 bool UTTToolboxBlueprintLibrary::CopyAnimMontageCurves(UAnimMontage* SourceAnimMontage, UAnimMontage* TargetAnimMontage)
