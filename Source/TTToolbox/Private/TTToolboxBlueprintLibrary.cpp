@@ -65,10 +65,7 @@ bool UTTToolboxBlueprintLibrary::DumpVirtualBones(USkeleton* Skeleton)
 
   // prepare string for virtual bones
   FString dumpString;
-  if (Skeleton->GetVirtualBones().Num() > 1)
-  {
-    dumpString += "(";
-  }
+  dumpString += "(";
 
   uint32 count = 0;
   for (auto& virtualBone : Skeleton->GetVirtualBones())
@@ -97,10 +94,7 @@ bool UTTToolboxBlueprintLibrary::DumpVirtualBones(USkeleton* Skeleton)
     count++;
   }
 
-  if (Skeleton->GetVirtualBones().Num() > 1)
-  {
-    dumpString += ")";
-  }
+  dumpString += ")";
 
   // dump virtual bones
   UE_LOG(LogTemp, Log, TEXT("%s"), *dumpString);
