@@ -103,6 +103,19 @@ struct TTTOOLBOX_API FTTBlendProfile_BP
 	TMap<FName, float> BlendValues;
 };
 
+
+USTRUCT(Blueprintable)
+struct TTTOOLBOX_API FTTMontageSlotGroup
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
+	FName GroupName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
+	TArray<FName> SlotNames;
+};
+
 UCLASS()
 class TTTOOLBOX_API UTTToolboxBlueprintLibrary : public UBlueprintFunctionLibrary
 {
@@ -153,6 +166,14 @@ public:
 	// adds the given 'SkeletonCurveName' to the specified 'Skeleton' and returns if successful, false if the given 'SkeletonCurveName' already exists
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool AddSkeletonCurve(USkeleton* Skeleton, const FName& SkeletonCurveName);
+
+	// dumps all groups and montages slots for the given 'Skeleton'.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool DumpGroupsAndSlots(USkeleton* Skeleton);
+
+	// adds the given 'SlotGroup' to the specified 'Skeleton'. Returns true on success, false otherwise.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool AddSkeletonSlotGroup(USkeleton* Skeleton, const FTTMontageSlotGroup& SlotGroup);
 
 	// adds the fiven 'NewBones' to the given 'Skeleton' and it's connected skeletal meshes.
 	// NOTE: Sadly Unreal Engine does come with lot's of assertions and it is very hard to implement this feature in a save way,

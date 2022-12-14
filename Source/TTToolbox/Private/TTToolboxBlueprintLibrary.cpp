@@ -642,6 +642,113 @@ bool UTTToolboxBlueprintLibrary::AddSkeletonCurve(USkeleton* Skeleton, const FNa
     return Skeleton->AddSmartNameAndModify(USkeleton::AnimCurveMappingName, SkeletonCurveName, outName);
 }
 
+bool UTTToolboxBlueprintLibrary::AddSkeletonSlotGroup(USkeleton* Skeleton, const FTTMontageSlotGroup& SlotGroup)
+{
+    // check input arguments
+    if (!IsValid(Skeleton))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"DumpGroupsAndSlots\" with invalid \"Skeleton\"."));
+        return false;
+    }
+
+    if (SlotGroup.GroupName.IsNone())
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"AddSkeletonSlotGroup\" with invalid \"SlotGroup.GroupName\" (\"None\")."));
+        return false;
+    }
+
+    auto slotGroup = Skeleton->FindAnimSlotGroup(SlotGroup.GroupName);
+    if (!slotGroup)
+    {
+        (void)Skeleton->AddSlotGroupName(SlotGroup.GroupName); // do not process the return value or raise any warning
+        slotGroup = Skeleton->FindAnimSlotGroup(SlotGroup.GroupName);
+    }
+
+    for(int32 ii = 0; ii < SlotGroup.SlotNames.Num(); ii++)
+    {
+        if (SlotGroup.SlotNames[ii].IsNone())
+        {
+            UE_LOG(LogTemp, Error, TEXT("During the call of \"AddSkeletonSlotGroup\" the slot group \"%s\" did contain a invalid slot name (\"None\") at index %i."), *SlotGroup.GroupName.ToString(), ii);
+            continue;
+        }
+
+        slotGroup->SlotNames.AddUnique(SlotGroup.SlotNames[ii]);
+    }
+
+    Skeleton->Modify();
+
+    return true;
+}
+
+bool UTTToolboxBlueprintLibrary::DumpGroupsAndSlots(USkeleton* Skeleton)
+{
+    // check input arguments
+    if (!IsValid(Skeleton))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Called \"DumpGroupsAndSlots\" with invalid \"Skeleton\"."));
+        return false;
+    }
+
+    // convert blend profiles to a string
+    // ((GroupName="G",SlotNames=("S1","S2")))
+    FString dumpString = "(";
+    uint32 count = 0;
+    for (auto& group : Skeleton->GetSlotGroups())
+    {
+        if (count > 0)
+        {
+            dumpString += ",(";
+        }
+        else
+        {
+            dumpString += "(";
+        }
+
+        // name
+        dumpString += "GroupName=\"";
+        dumpString += group.GroupName.ToString();
+        dumpString += "\"";
+
+        uint32 slotCount = 0;
+        if (group.SlotNames.Num() > 0)
+        {
+            dumpString += ",SlotNames=(";
+        }
+        for (auto& slot : group.SlotNames)
+        {
+            if (slotCount > 0)
+            {
+                dumpString += ",";
+            }
+
+            dumpString += "\"";
+            dumpString += slot.ToString();
+            dumpString += "\"";
+
+            slotCount++;
+        }
+
+        if (group.SlotNames.Num() > 0)
+        {
+            dumpString += ")";
+        }
+
+        dumpString += ")";
+
+        count++;
+    }
+    dumpString += ")";
+
+    // print dump string to the output log
+    UE_LOG(LogTemp, Log, TEXT("%s"), *dumpString);
+
+#if WITH_EDITOR
+    FPlatformApplicationMisc::ClipboardCopy(*dumpString);
+#endif
+
+    return true;
+}
+
 //! @todo @ffs check if the engine class could be used here
 struct CSkeletonReferencePose
 {
