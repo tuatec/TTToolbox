@@ -32,6 +32,11 @@ void UTTCopyAllCurvesAnimModifier::OnApply_Implementation(UAnimSequence* TargetS
     return;
   }
 
+  if (ReplaceExistingCurves)
+  {
+    UAnimationBlueprintLibrary::RemoveAllCurveData(TargetSequence);
+  }
+
   // copy all curves to the target anim sequence
   for (auto& sourceCurve : SourceSequence->GetCurveData().FloatCurves)
   {
