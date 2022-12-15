@@ -22,7 +22,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "IKRigDefinition.h"
+#include "TTToolboxTypes.h"
 #include "TTToolboxBlueprintLibrary.generated.h"
 
 // forward declarations
@@ -31,92 +31,6 @@ class UIKRigDefinition;
 class UControlRig;
 class UControlRigBlueprint;
 
-
-// Helper stucture that is exposed to Blueprints to be independent from the ik rig implementation.
-// Additionally, this can be reused in data tables to store the bone chains.
-USTRUCT(Blueprintable)
-struct TTTOOLBOX_API FBoneChain_BP
-{
-	GENERATED_BODY()
-
-	FBoneChain_BP() = default;
-
-	FBoneChain_BP(const FBoneChain& BoneChain)
-		: ChainName(BoneChain.ChainName)
-		, StartBone(BoneChain.StartBone.BoneName)
-		, EndBone(BoneChain.EndBone.BoneName)
-		, IKGoalName(BoneChain.IKGoalName)
-	{}
-
-	// stores the bone chain name that will be shown in the ik rig asset editor window
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = BoneChain)
-	FName ChainName = NAME_None;
-
-	// stores the beginning bone name of the bone chain
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = BoneChain)
-	FName StartBone = NAME_None;
-
-	// stores the ending bone name of the bone chain
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = BoneChain)
-	FName EndBone = NAME_None;
-
-	// stores the ik goal name that is visible in the ik rig asset editor window
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IK)
-	FName IKGoalName = NAME_None;
-};
-
-
-USTRUCT(Blueprintable)
-struct TTTOOLBOX_API FTTNewBone_BP
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	FName NewBoneName = NAME_None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	FName ParentBone = NAME_None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	FName ConstraintBone = NAME_None;
-};
-
-USTRUCT(Blueprintable)
-struct TTTOOLBOX_API FTTConstraintBone_BP
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	FName ModifiedBone = NAME_None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	FName ConstraintBone = NAME_None;
-};
-
-USTRUCT(Blueprintable)
-struct TTTOOLBOX_API FTTBlendProfile_BP
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	EBlendProfileMode BlendProfileMode = EBlendProfileMode::BlendMask;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	TMap<FName, float> BlendValues;
-};
-
-
-USTRUCT(Blueprintable)
-struct TTTOOLBOX_API FTTMontageSlotGroup
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	FName GroupName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
-	TArray<FName> SlotNames;
-};
 
 UCLASS()
 class TTTOOLBOX_API UTTToolboxBlueprintLibrary : public UBlueprintFunctionLibrary
