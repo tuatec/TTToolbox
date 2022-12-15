@@ -28,6 +28,8 @@
 // forward declarations
 class USkeleton;
 class UIKRigDefinition;
+class UControlRig;
+class UControlRigBlueprint;
 
 
 // Helper stucture that is exposed to Blueprints to be independent from the ik rig implementation.
@@ -91,6 +93,31 @@ struct TTTOOLBOX_API FTTConstraintBone_BP
 	FName ConstraintBone = NAME_None;
 };
 
+USTRUCT(Blueprintable)
+struct TTTOOLBOX_API FTTBlendProfile_BP
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
+	EBlendProfileMode BlendProfileMode = EBlendProfileMode::BlendMask;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
+	TMap<FName, float> BlendValues;
+};
+
+
+USTRUCT(Blueprintable)
+struct TTTOOLBOX_API FTTMontageSlotGroup
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
+	FName GroupName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TTToolbox")
+	TArray<FName> SlotNames;
+};
+
 UCLASS()
 class TTTOOLBOX_API UTTToolboxBlueprintLibrary : public UBlueprintFunctionLibrary
 {
@@ -127,6 +154,29 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool CheckForMissingCurveNames(const TArray<FName>& CurveNamesToCheck, USkeleton* Skeleton);
 
+	// returns true if the given 'SkeletonCurveName' exists in the specified 'Skeleton', otherwise false.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool HasSkeletonCurve(USkeleton* Skeleton, const FName& SkeletonCurveName);
+
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool DumpSkeletonBlendProfile(USkeleton* Skeleton);
+
+	// will add a new 'BlendProfile' to the given 'Skeleton' with the 'BlendProfileName'. If 'Overwrite' is set to true it will overwrite the already existing blend values otherwise returns with false.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool AddSkeletonBlendProfile(USkeleton* Skeleton, const FName& BlendProfileName, const FTTBlendProfile_BP& BlendProfile, bool Overwrite = false);
+
+	// adds the given 'SkeletonCurveName' to the specified 'Skeleton' and returns if successful, false if the given 'SkeletonCurveName' already exists.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool AddSkeletonCurve(USkeleton* Skeleton, const FName& SkeletonCurveName);
+
+	// dumps all groups and montages slots for the given 'Skeleton'. Returns true on success, false otherwise.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool DumpGroupsAndSlots(USkeleton* Skeleton);
+
+	// adds the given 'SlotGroup' to the specified 'Skeleton'. Returns true on success, false otherwise.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool AddSkeletonSlotGroup(USkeleton* Skeleton, const FTTMontageSlotGroup& SlotGroup);
+
 	// adds the fiven 'NewBones' to the given 'Skeleton' and it's connected skeletal meshes.
 	// NOTE: Sadly Unreal Engine does come with lot's of assertions and it is very hard to implement this feature in a save way,
 	// the function removes all virtual bones and adds them after again after the unweighted bones are added to the skeletal meshes.
@@ -142,6 +192,12 @@ public:
 	// the function removes all virtual bones and adds them after again after the root bone was added to the skeletal meshes.
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static bool AddRootBone(USkeleton* Skeleton);
+
+	// ControlRig functions
+
+	// updates the given 'ControlRigBlueprint' with the specified 'SkeletalMesh'. Returns true on success, false otherwise.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool UpdateControlRigBlueprintPreviewMesh(UControlRigBlueprint* ControlRigBlueprint, USkeletalMesh* SkeletalMesh);
 
 	// AnimMontage functions
 

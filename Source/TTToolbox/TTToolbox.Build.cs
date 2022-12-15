@@ -62,6 +62,8 @@ public class TTToolbox : ModuleRules
 				"IKRigEditor",
 				"ApplicationCore",
 				"RenderCore",
+                "ControlRig",
+                "ControlRigDeveloper",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

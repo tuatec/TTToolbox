@@ -40,14 +40,14 @@ void UIKRig_ConstraintBones::Initialize(const FIKRigSkeleton& IKRigSkeleton)
 		if (constraintBone == INDEX_NONE)
 		{
 			errorsOccurred = true;
-			UE_LOG(LogTemp, Error, TEXT("Failed get get bone index for constaint bone %s"), *constraint.ConstraintBone.ToString());
+			UE_LOG(LogTemp, Error, TEXT("Failed get get bone index for ConstraintBone %s"), *constraint.ConstraintBone.ToString());
 			continue;
 		}
 
 		if (modifiedBone == INDEX_NONE)
 		{
 			errorsOccurred = true;
-			UE_LOG(LogTemp, Error, TEXT("Failed get get bone index for constaint bone %s"), *constraint.ModifiedBone.ToString());
+			UE_LOG(LogTemp, Error, TEXT("Failed get get bone index for ModifiedBone %s"), *constraint.ModifiedBone.ToString());
 			continue;
 		}
 
