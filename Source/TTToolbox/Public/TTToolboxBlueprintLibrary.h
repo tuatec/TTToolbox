@@ -124,6 +124,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
 	static void RequestAnimationRecompress(USkeleton* Skeleton);
 
+	// forces animation sequence recompression for the given 'AnimSequences', which will also reconstraint the virtual bones.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static void RequestAnimSequencesRecompression(TArray<UAnimSequence*> AnimSequences);
+
+	// sets the interpolation mode for the given 'AnimSequence'.
+	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
+	static bool SetAnimSequenceInterpolation(UAnimSequence* AnimSequence, EAnimInterpolationType AnimInterpolationType);
+
 	// IK Rig functions
 
 	UFUNCTION(BlueprintCallable, Category = "TTToolbox")
