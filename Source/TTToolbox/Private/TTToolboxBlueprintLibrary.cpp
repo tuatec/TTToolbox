@@ -1114,6 +1114,42 @@ void UTTToolboxBlueprintLibrary::RequestAnimationRecompress(USkeleton* Skeleton)
   }
 }
 
+void UTTToolboxBlueprintLibrary::RequestAnimSequencesRecompression(TArray<UAnimSequence*> AnimSequences)
+{
+  for (auto animSequence : AnimSequences)
+  {
+    if (!IsValid(animSequence))
+    {
+      //! @todo error message
+    }
+    else
+    {
+      animSequence->RequestAsyncAnimRecompression();
+    }
+  }
+}
+
+// the reason why we not call the official function "UAnimationBlueprintLibrary::SetAnimationInterpolationType"
+// is that it does not give us the feedback that is needed, no return value ...
+// But we like to use the error node of TTToolbox and don't want to check if the AnimSequence is valid
+// it should be covered by the function and not by the caller. 
+// Additionally, we want to show that the AnimSequence has changed ==> so we call AnimSequence->Modify() of course as well!
+// Also investing these ~10 lines of code will result in a better UX in the end. ;-)
+bool UTTToolboxBlueprintLibrary::SetAnimSequenceInterpolation(UAnimSequence* AnimSequence, EAnimInterpolationType AnimInterpolationType)
+{
+  // check input arguments
+  if (!IsValid(AnimSequence))
+  {
+    UE_LOG(LogTemp, Error, TEXT("Called \"SetAnimSequenceInterpolation\" with invalid AnimSequence."));
+    return false;
+  }
+
+  AnimSequence->Interpolation = AnimInterpolationType;
+  AnimSequence->Modify();
+
+  return true;
+}
+
 bool UTTToolboxBlueprintLibrary::ConstraintBonesForSkeletonPose(const TArray<FTTConstraintBone_BP>& ConstraintBones, USkeleton* Skeleton)
 {
   //! @todo @ffs implement

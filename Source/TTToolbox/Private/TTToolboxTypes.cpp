@@ -18,23 +18,14 @@
 // WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#pragma once
+#include "TTToolboxTypes.h"
 
-#include "CoreMinimal.h"
-#include "AnimationModifier.h"
-#include "TTCopyAllCurvesAnimModifier.generated.h"
+// Unreal Engine includes
+#include "IKRigDefinition.h"
 
-UCLASS()
-class TTTOOLBOX_API UTTCopyAllCurvesAnimModifier : public UAnimationModifier
-{
-	GENERATED_BODY()
-private: // methods
-	void OnApply_Implementation(UAnimSequence* TargetSequence) override;
-
-public: // members
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-	UAnimSequence* SourceSequence = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-	bool ReplaceExistingCurves = false;
-};
+FBoneChain_BP::FBoneChain_BP(const FBoneChain& BoneChain)
+  : ChainName(BoneChain.ChainName)
+  , StartBone(BoneChain.StartBone.BoneName)
+  , EndBone(BoneChain.EndBone.BoneName)
+  , IKGoalName(BoneChain.IKGoalName)
+{}
