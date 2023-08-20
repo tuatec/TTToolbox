@@ -360,48 +360,54 @@ bool UTTToolboxBlueprintLibrary::DumpSkeletonCurveNames(USkeleton* Skeleton)
   }
 
   // get curves names
-  auto curveMapping = Skeleton->GetSmartNameContainer(USkeleton::AnimCurveMappingName);
-  if (!curveMapping)
-  {
-    UE_LOG(LogTemp, Error, TEXT("Failed to get curve mapping in \"DumpSkeletonCurveNames\". Please contact the author of this plugin."));
-    return false;
-  }
+  	TArray<FName> curveNames;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 3
+	
+  //Get curve names for version 5.3+
+	if (const UAnimCurveMetaData* AnimCurveMetaData = Skeleton->GetAssetUserData<UAnimCurveMetaData>())
+	{
+		AnimCurveMetaData->ForEachCurveMetaData([&curveNames](FName name, const FCurveMetaData& metaData) {
+			curveNames.Add(name);
+			});
+	}
 
-  // get curve names
-  TArray<FName> curveNames;
-  curveMapping->Iterate([&curveNames](const FSmartNameMappingIterator& Iterator)
-    {
-      FName curveName;
-      if (Iterator.GetName(curveName))
-      {
-        curveNames.Add(curveName);
-      }
-      else
-      {
-        UE_LOG(LogTemp, Error, TEXT("An error occured in \"DumpSkeletonCurveNames\" while getting a curve name. Please contact the author of this plugin."));
-      }
-    }
-  );
+#else
+	//Get curve names for version < 5.3
+	auto curveMapping = Skeleton->GetSmartNameContainer(USkeleton::AnimCurveMappingName);
+	if (!curveMapping)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get curve mapping in \"DumpSkeletonCurveNames\". Please contact the author of this plugin."));
+		return false;
+	}
 
-  // prepare dump string
-  FString dumpString = "(";
+	// get curve names
+	curveMapping->Iterate([&curveNames](const FSmartNameMappingIterator& Iterator)
+		{
+			FName curveName;
+			if (Iterator.GetName(curveName))
+			{
+				curveNames.Add(curveName);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("An error occured in \"DumpSkeletonCurveNames\" while getting a curve name. Please contact the author of this plugin."));
+			}
+		}
+	);
+#endif
 
-  uint32 count = 0;
-  for (auto curveName : curveNames)
-  {
-    if (count > 0)
-    {
-      dumpString += ",";
-    }
+	FString dumpString;
+	dumpString += "(";
 
-    dumpString += "\"";
-    dumpString += curveName.ToString();
-    dumpString += "\"";
-
-    count++;
-  }
-
-  dumpString += ")";
+	uint32 count = 0;
+	for (auto& curveName : curveNames) {
+		if (count > 0) {
+			dumpString += ", ";
+		}
+		dumpString += FString::Printf(TEXT("\"%s\""), *curveName.ToString());
+		count++;
+	}
+	dumpString += ")";
 
   // dump curve names
   UE_LOG(LogTemp, Log, TEXT("%s"), *dumpString);
@@ -422,45 +428,53 @@ bool UTTToolboxBlueprintLibrary::CheckForMissingCurveNames(const TArray<FName>& 
     return false;
   }
 
+  bool hasNoMissingCurves = true;
+
   // get curve names from target skeleton
-  auto curveMapping = Skeleton->GetSmartNameContainer(USkeleton::AnimCurveMappingName);
-  if (!curveMapping)
-  {
-    UE_LOG(LogTemp, Error, TEXT("Failed to get curve mapping in \"DumpSkeletonCurveNames\". Please contact the author of this plugin."));
-    return false;
-  }
+  	TArray<FName> curveNames;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 3
 
-  TArray<FName> skeletonCurveNames;
-  curveMapping->Iterate([&skeletonCurveNames](const FSmartNameMappingIterator& Iterator)
-    {
-      FName curveName;
-      if (Iterator.GetName(curveName))
-      {
-        skeletonCurveNames.Add(curveName);
-      }
-      else
-      {
-        UE_LOG(LogTemp, Error, TEXT("An error occured in \"CheckForMissingCurveNames\" while getting a curve name. Please contact the author of this plugin."));
-      }
-    }
-  );
+	//Get curve names for version 5.3+
+	if (const UAnimCurveMetaData* AnimCurveMetaData = Skeleton->GetAssetUserData<UAnimCurveMetaData>())
+	{
+		AnimCurveMetaData->ForEachCurveMetaData([&curveNames](FName name, const FCurveMetaData& metaData) {
+			curveNames.Add(name);
+			});
+	}
 
-  // check if curves are missing in the target skeleton
-  bool hasNoMissingCurveNames = true;
-  for (auto& curveName : CurveNamesToCheck)
-  {
-    if (skeletonCurveNames.Find(curveName) == INDEX_NONE)
-    {
-      if (hasNoMissingCurveNames)
-      {
-        UE_LOG(LogTemp, Error, TEXT("The following curves are missing in skeleton \"%s\":"), *(Skeleton->GetFullName()));
-      }
+#else
 
-      UE_LOG(LogTemp, Error, TEXT("  %s"), *curveName.ToString());
+	// Get curve names for version < 5.3
+	auto curveMapping = Skeleton->GetSmartNameContainer(USkeleton::AnimCurveMappingName);
+	if (!curveMapping)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get curve mapping in \"DumpSkeletonCurveNames\". Please contact the author of this plugin."));
+		return false;
+	}
 
-      hasNoMissingCurveNames = false;
-    }
-  }
+	curveMapping->Iterate([&curveNames](const FSmartNameMappingIterator& Iterator)
+		{
+			FName curveName;
+			if (Iterator.GetName(curveName))
+			{
+				curveNames.Add(curveName);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("An error occured in \"CheckForMissingCurveNames\" while getting a curve name. Please contact the author of this plugin."));
+			}
+		}
+	);
+
+#endif
+
+	//check if curves are missing in the target skeleton
+	for (auto& curveName : CurveNamesToCheck) {
+		if (!curveNames.Contains(curveName)) {
+			UE_LOG(LogTemp, Error, TEXT("CurveName %s is missing in skeleton %s when calling CheckForMissingCurveNames"), *curveName.ToString(), *(Skeleton->GetFullName()));
+			hasNoMissingCurves = false;
+		}
+	}
 
   return hasNoMissingCurveNames;
 }
@@ -641,6 +655,9 @@ bool UTTToolboxBlueprintLibrary::AddSkeletonCurve(USkeleton* Skeleton, const FNa
     }
 
     // add the SkeletonCurveName
+#if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION >=3
+    return Skeleton->AddCurveMetaData(SkeletonCurveName);
+#endif
     FSmartName outName;
     return Skeleton->AddSmartNameAndModify(USkeleton::AnimCurveMappingName, SkeletonCurveName, outName);
 }
