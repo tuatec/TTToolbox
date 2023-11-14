@@ -28,11 +28,12 @@
 
 #include "Commandlets/CompressAnimationsCommandlet.h"
 
-#include "IKRigDefinition.h"
+#include "Rig/IKRigDefinition.h"
 #include "RigEditor/IKRigController.h"
+#include "Rigs/RigHierarchyController.h"
 
-#include "ARFilter.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/ARFilter.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 #include "ControlRigBlueprint.h"
 #include "ControlRig.h"
@@ -1446,10 +1447,10 @@ bool UTTToolboxBlueprintLibrary::CopyAnimMontageCurves(UAnimMontage* SourceAnimM
   {
     FSmartName curveSmartName;
 
-    const FName containerName = retrieveContainerNameForCurve(TargetAnimMontage, sourceCurve.Name.DisplayName);
-    if (!TargetAnimMontage->GetSkeleton()->GetSmartNameByName(containerName, sourceCurve.Name.DisplayName, curveSmartName))
+    const FName containerName = retrieveContainerNameForCurve(TargetAnimMontage, sourceCurve.GetName());
+    if (!TargetAnimMontage->GetSkeleton()->GetSmartNameByName(containerName, sourceCurve.GetName(), curveSmartName))
     {
-      UE_LOG(LogTemp, Error, TEXT("Failed to get smart name for curve %s"), *sourceCurve.Name.DisplayName.ToString());
+      UE_LOG(LogTemp, Error, TEXT("Failed to get smart name for curve %s"), *sourceCurve.GetName().ToString());
       continue;
     }
 
@@ -1543,7 +1544,7 @@ bool UTTToolboxBlueprintLibrary::AddIKBoneChains(UIKRigDefinition* IKRigDefiniti
     return false;
   }
 
-  auto ikRigController = UIKRigController::GetIKRigController(IKRigDefinition);
+  auto ikRigController = UIKRigController::GetController(IKRigDefinition);
   if (!IsValid(ikRigController))
   {
     UE_LOG(LogTemp, Error, TEXT("During getting the IKRigController for %s in \"AddIKBoneChains\" failed."), *(IKRigDefinition->GetFullName()));
@@ -1573,8 +1574,11 @@ bool UTTToolboxBlueprintLibrary::AddIKBoneChains(UIKRigDefinition* IKRigDefiniti
 
 #if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION < 1
     ikRigController->AddRetargetChain(boneChain.ChainName, boneChain.StartBone, boneChain.EndBone);
-#elif ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION >= 1
+#elif ENGINE_MAJOR_VERSION ==	5 && (ENGINE_MINOR_VERSION >= 1 && ENGINE_MINOR_VERSION <= 2)
     ikRigController->AddRetargetChain({ boneChain.ChainName, boneChain.StartBone, boneChain.EndBone });
+#elif ENGINE_MAJOR_VERSION ==	5 && (ENGINE_MINOR_VERSION >= 3)
+    //! @todo
+    ikRigController->AddRetargetChain({/*boneChain.ChainName, boneChain.StartBone, boneChain.EndBone*/});
 #endif
 
   }
@@ -1592,7 +1596,7 @@ bool UTTToolboxBlueprintLibrary::SetIKBoneChainGoal(UIKRigDefinition* IKRigDefin
   }
 
   // get the IK rig controller
-  auto ikRigController = UIKRigController::GetIKRigController(IKRigDefinition);
+  auto ikRigController = UIKRigController::GetController(IKRigDefinition);
   if (!IsValid(ikRigController))
   {
     UE_LOG(LogTemp, Error, TEXT("During getting the IKRigController for %s in \"SetIKBoneChainGoal\" failed."), *(IKRigDefinition->GetFullName()));
