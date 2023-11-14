@@ -41,23 +41,23 @@ void UTTCopyAllCurvesAnimModifier::OnApply_Implementation(UAnimSequence* TargetS
   for (auto& sourceCurve : SourceSequence->GetCurveData().FloatCurves)
   {
     // remove the curve if it already exists ==> overwrite
-    if (UAnimationBlueprintLibrary::DoesCurveExist(TargetSequence, sourceCurve.Name.DisplayName, ERawCurveTrackTypes::RCT_Float))
+    if (UAnimationBlueprintLibrary::DoesCurveExist(TargetSequence, sourceCurve.GetName(), ERawCurveTrackTypes::RCT_Float))
     {
-      UAnimationBlueprintLibrary::RemoveCurve(TargetSequence, sourceCurve.Name.DisplayName);
+      UAnimationBlueprintLibrary::RemoveCurve(TargetSequence, sourceCurve.GetName());
     }
 
     // introduce the curve
-    UAnimationBlueprintLibrary::AddCurve(TargetSequence, sourceCurve.Name.DisplayName);
+    UAnimationBlueprintLibrary::AddCurve(TargetSequence, sourceCurve.GetName());
 
     // prepare needed objects to set the curve keys
-    const FName containerName = UAnimationBlueprintLibrary::RetrieveContainerNameForCurve(TargetSequence, sourceCurve.Name.DisplayName);
+    const FName containerName = UAnimationBlueprintLibrary::RetrieveContainerNameForCurve(TargetSequence, sourceCurve.GetName());
     if (containerName == NAME_None)
     {
-      UE_LOG(LogTemp, Error, TEXT("Failed to get container name for curve %s aborting copy curves to %s"), *sourceCurve.Name.DisplayName.ToString(), *TargetSequence->GetName());
+      UE_LOG(LogTemp, Error, TEXT("Failed to get container name for curve %s aborting copy curves to %s"), *sourceCurve.GetName().ToString(), *TargetSequence->GetName());
       return;
     }
 
-    const FSmartName curveSmartName = UAnimationBlueprintLibrary::RetrieveSmartNameForCurve(TargetSequence, sourceCurve.Name.DisplayName, containerName);
+    const FSmartName curveSmartName = UAnimationBlueprintLibrary::RetrieveSmartNameForCurve(TargetSequence, sourceCurve.GetName(), containerName);
     const FAnimationCurveIdentifier curveId(curveSmartName, ERawCurveTrackTypes::RCT_Float);
 
     // transfer curve keys
