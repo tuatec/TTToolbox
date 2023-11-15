@@ -50,15 +50,7 @@ void UTTCopyAllCurvesAnimModifier::OnApply_Implementation(UAnimSequence* TargetS
     UAnimationBlueprintLibrary::AddCurve(TargetSequence, sourceCurve.GetName());
 
     // prepare needed objects to set the curve keys
-    const FName containerName = UAnimationBlueprintLibrary::RetrieveContainerNameForCurve(TargetSequence, sourceCurve.GetName());
-    if (containerName == NAME_None)
-    {
-      UE_LOG(LogTemp, Error, TEXT("Failed to get container name for curve %s aborting copy curves to %s"), *sourceCurve.GetName().ToString(), *TargetSequence->GetName());
-      return;
-    }
-
-    const FSmartName curveSmartName = UAnimationBlueprintLibrary::RetrieveSmartNameForCurve(TargetSequence, sourceCurve.GetName(), containerName);
-    const FAnimationCurveIdentifier curveId(curveSmartName, ERawCurveTrackTypes::RCT_Float);
+    const FAnimationCurveIdentifier curveId(sourceCurve.GetName(), ERawCurveTrackTypes::RCT_Float);
 
     // transfer curve keys
     TargetSequence->GetController().SetCurveKeys(curveId, sourceCurve.FloatCurve.GetConstRefOfKeys());

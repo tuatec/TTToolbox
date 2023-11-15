@@ -361,28 +361,8 @@ bool UTTToolboxBlueprintLibrary::DumpSkeletonCurveNames(USkeleton* Skeleton)
   }
 
   // get curves names
-  auto curveMapping = Skeleton->GetSmartNameContainer(USkeleton::AnimCurveMappingName);
-  if (!curveMapping)
-  {
-    UE_LOG(LogTemp, Error, TEXT("Failed to get curve mapping in \"DumpSkeletonCurveNames\". Please contact the author of this plugin."));
-    return false;
-  }
-
-  // get curve names
   TArray<FName> curveNames;
-  curveMapping->Iterate([&curveNames](const FSmartNameMappingIterator& Iterator)
-    {
-      FName curveName;
-      if (Iterator.GetName(curveName))
-      {
-        curveNames.Add(curveName);
-      }
-      else
-      {
-        UE_LOG(LogTemp, Error, TEXT("An error occured in \"DumpSkeletonCurveNames\" while getting a curve name. Please contact the author of this plugin."));
-      }
-    }
-  );
+  Skeleton->GetCurveMetaDataNames(curveNames);
 
   // prepare dump string
   FString dumpString = "(";
@@ -424,27 +404,8 @@ bool UTTToolboxBlueprintLibrary::CheckForMissingCurveNames(const TArray<FName>& 
   }
 
   // get curve names from target skeleton
-  auto curveMapping = Skeleton->GetSmartNameContainer(USkeleton::AnimCurveMappingName);
-  if (!curveMapping)
-  {
-    UE_LOG(LogTemp, Error, TEXT("Failed to get curve mapping in \"DumpSkeletonCurveNames\". Please contact the author of this plugin."));
-    return false;
-  }
-
   TArray<FName> skeletonCurveNames;
-  curveMapping->Iterate([&skeletonCurveNames](const FSmartNameMappingIterator& Iterator)
-    {
-      FName curveName;
-      if (Iterator.GetName(curveName))
-      {
-        skeletonCurveNames.Add(curveName);
-      }
-      else
-      {
-        UE_LOG(LogTemp, Error, TEXT("An error occured in \"CheckForMissingCurveNames\" while getting a curve name. Please contact the author of this plugin."));
-      }
-    }
-  );
+  Skeleton->GetCurveMetaDataNames(skeletonCurveNames);
 
   // check if curves are missing in the target skeleton
   bool hasNoMissingCurveNames = true;
@@ -481,17 +442,8 @@ bool UTTToolboxBlueprintLibrary::HasSkeletonCurve(USkeleton* Skeleton, const FNa
         return false;
     }
 
-    // get curve names from Skeleton
-    auto curveMapping = Skeleton->GetSmartNameContainer(USkeleton::AnimCurveMappingName);
-    if (!curveMapping)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Failed to get curve mapping in \"DumpSkeletonCurveNames\". Please contact the author of this plugin."));
-        return false;
-    }
-
     // is the SkeletonCurveName already present?
-    FSmartName outName;
-    return curveMapping->FindSmartName(SkeletonCurveName, outName);
+    return Skeleton->GetCurveMetaData(SkeletonCurveName) != nullptr;
 }
 
 bool UTTToolboxBlueprintLibrary::DumpSkeletonBlendProfile(USkeleton* Skeleton)
@@ -506,6 +458,7 @@ bool UTTToolboxBlueprintLibrary::DumpSkeletonBlendProfile(USkeleton* Skeleton)
     // convert blend profiles to a string
     FString dumpString = "(";
     uint32 count = 0;
+    FString enumString; // temporary variable for retrieving the enum name
     for (auto& blendProfile : Skeleton->BlendProfiles)
     {
         if (!blendProfile)
@@ -536,7 +489,12 @@ bool UTTToolboxBlueprintLibrary::DumpSkeletonBlendProfile(USkeleton* Skeleton)
         {
             dumpString += "(";
             dumpString += "BlendProfileMode=";
-            dumpString += UEnum::GetValueAsString<EBlendProfileMode>(blendProfile->GetMode()).Replace(TEXT("EBlendProfileMode::"), TEXT(""));
+            // in 5.1 this was working fine but now it is deprecated and Visual Studio
+            // is using the wrong overload for this enum class 'EBlendProfileMode'.
+            //dumpString += UEnum::GetValueAsString<EBlendProfileMode>(blendProfile->GetMode()).Replace(TEXT("EBlendProfileMode::"), TEXT(""));
+            // But the other overload with only the enum type and the FString is working fine :)
+            UEnum::GetValueAsString<EBlendProfileMode>(blendProfile->GetMode(), enumString);
+            dumpString += enumString.Replace(TEXT("EBlendProfileMode::"), TEXT(""));
 
             dumpString += ",BlendValues=(";
             uint32 boneCount = 0;
@@ -642,8 +600,7 @@ bool UTTToolboxBlueprintLibrary::AddSkeletonCurve(USkeleton* Skeleton, const FNa
     }
 
     // add the SkeletonCurveName
-    FSmartName outName;
-    return Skeleton->AddSmartNameAndModify(USkeleton::AnimCurveMappingName, SkeletonCurveName, outName);
+    return Skeleton->AddCurveMetaData(SkeletonCurveName);
 }
 
 bool UTTToolboxBlueprintLibrary::AddSkeletonSlotGroup(USkeleton* Skeleton, const FTTMontageSlotGroup& SlotGroup)
@@ -1101,7 +1058,7 @@ void UTTToolboxBlueprintLibrary::RequestAnimationRecompress(USkeleton* Skeleton)
 
   TArray<FAssetData> assets;
   IAssetRegistry& assetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
-  assetRegistry.GetAssetsByClass(UAnimSequence::StaticClass()->GetFName(), assets);
+  assetRegistry.GetAssetsByClass(UAnimSequence::StaticClass()->GetClassPathName(), assets);
 
   for (auto& asset : assets)
   {
@@ -1109,7 +1066,7 @@ void UTTToolboxBlueprintLibrary::RequestAnimationRecompress(USkeleton* Skeleton)
     {
       if (animSequence->GetSkeleton()->GetFName() == Skeleton->GetFName())
       {
-        animSequence->RequestAsyncAnimRecompression();
+        animSequence->BeginCacheDerivedDataForCurrentPlatform();
       }
     }
   }
@@ -1125,7 +1082,7 @@ void UTTToolboxBlueprintLibrary::RequestAnimSequencesRecompression(TArray<UAnimS
     }
     else
     {
-      animSequence->RequestAsyncAnimRecompression();
+      animSequence->BeginCacheDerivedDataForCurrentPlatform();
     }
   }
 }
@@ -1226,7 +1183,8 @@ bool UTTToolboxBlueprintLibrary::AddRootBone(USkeleton* Skeleton)
       }
 
       // reset all bone transforms and reset retarget pose
-      skeletalMesh->GetRetargetBasePose().Empty();
+      //! @todo clarify if this is still needed in 5.3 for adding root bones to the Mixamo Skeleton?
+      //skeletalMesh->GetRetargetBasePose().Empty();
       skeletalMesh->CalculateInvRefMatrices();
 
       uint32 LODIndex = 0;
@@ -1389,22 +1347,6 @@ bool UTTToolboxBlueprintLibrary::AddRootBone(USkeleton* Skeleton)
   return true;
 }
 
-static FName retrieveContainerNameForCurve(const UAnimSequenceBase* AnimaSequenceBase, const FName& CurveName)
-{
-  checkf(AnimaSequenceBase != nullptr, TEXT("Invalid Animation Sequence ptr"));
-  const FName Names[(int32)ESmartNameContainerType::SNCT_MAX] = { USkeleton::AnimCurveMappingName, USkeleton::AnimTrackCurveMappingName };
-  for (int32 Index = 0; Index < (int32)ESmartNameContainerType::SNCT_MAX; ++Index)
-  {
-    const FSmartNameMapping* CurveMapping = AnimaSequenceBase->GetSkeleton()->GetSmartNameContainer(Names[Index]);
-    if (CurveMapping && CurveMapping->Exists(CurveName))
-    {
-      return Names[Index];
-    }
-  }
-
-  return NAME_None;
-}
-
 bool UTTToolboxBlueprintLibrary::UpdateControlRigBlueprintPreviewMesh(UControlRigBlueprint* ControlRigBlueprint, USkeletalMesh* SkeletalMesh)
 {
     if (!IsValid(ControlRigBlueprint))
@@ -1445,16 +1387,7 @@ bool UTTToolboxBlueprintLibrary::CopyAnimMontageCurves(UAnimMontage* SourceAnimM
 
   for (auto& sourceCurve : SourceAnimMontage->GetCurveData().FloatCurves)
   {
-    FSmartName curveSmartName;
-
-    const FName containerName = retrieveContainerNameForCurve(TargetAnimMontage, sourceCurve.GetName());
-    if (!TargetAnimMontage->GetSkeleton()->GetSmartNameByName(containerName, sourceCurve.GetName(), curveSmartName))
-    {
-      UE_LOG(LogTemp, Error, TEXT("Failed to get smart name for curve %s"), *sourceCurve.GetName().ToString());
-      continue;
-    }
-
-    const FAnimationCurveIdentifier curveId(curveSmartName, ERawCurveTrackTypes::RCT_Float);
+    const FAnimationCurveIdentifier curveId(sourceCurve.GetName(), ERawCurveTrackTypes::RCT_Float);
     targetController.AddCurve(curveId);
     targetController.SetCurveKeys(curveId, sourceCurve.FloatCurve.GetConstRefOfKeys());
   }
@@ -1632,7 +1565,7 @@ static TArray<USkeletalMesh*> getAllSkeletalMeshes(USkeleton* Skeleton)
   TArray<USkeletalMesh*> skeletalMeshes;
 
   FARFilter filter;
-  filter.ClassNames.Add(USkeletalMesh::StaticClass()->GetFName());
+  filter.ClassPaths.Add(USkeletalMesh::StaticClass()->GetClassPathName());
   filter.bRecursiveClasses = true;
   const FString skeletonString = FAssetData(Skeleton).GetExportTextName();
   filter.TagsAndValues.Add(USkeletalMesh::GetSkeletonMemberName(), skeletonString);
