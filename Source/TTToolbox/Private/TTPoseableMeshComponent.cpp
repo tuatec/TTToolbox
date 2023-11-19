@@ -22,7 +22,7 @@
 
 void UTTPoseableMeshComponent::SetBoneLocalTransformByName(const FName& BoneName, const FTransform& InTransform)
 {
-  if (!SkeletalMesh || !RequiredBones.IsValid())
+  if (!GetSkinnedAsset() || !RequiredBones.IsValid())
   {
     return;
   }
@@ -38,7 +38,7 @@ void UTTPoseableMeshComponent::SetBoneLocalTransformByName(const FName& BoneName
 void UTTPoseableMeshComponent::UpdatePose()
 {
   // Can't do anything without a SkeletalMesh
-  if (!SkeletalMesh)
+  if (!GetSkinnedAsset())
   {
     return;
   }

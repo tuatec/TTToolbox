@@ -21,7 +21,7 @@
 #include "TTToolboxTypes.h"
 
 // Unreal Engine includes
-#include "IKRigDefinition.h"
+#include "Rig/IKRigDefinition.h"
 
 FBoneChain_BP::FBoneChain_BP(const FBoneChain& BoneChain)
   : ChainName(BoneChain.ChainName)
