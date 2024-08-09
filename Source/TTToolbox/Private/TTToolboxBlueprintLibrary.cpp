@@ -553,7 +553,7 @@ bool UTTToolboxBlueprintLibrary::AddSkeletonBlendProfile(USkeleton* Skeleton, co
     auto blendProfile = Skeleton->GetBlendProfile(BlendProfileName);
     if (blendProfile && !Overwrite)
     { // if a blend profile was found and does not need to be overwriten, nothing is to do here
-        UE_LOG(LogTemp, Error, TEXT("The blend profile \"%s\" did already exist in Skeleton \"%s\" in case you want to overwrite the values set \"Overwrite\" to true."), *BlendProfileName.ToString());
+        UE_LOG(LogTemp, Error, TEXT("The blend profile \"%s\" did already exist in Skeleton \"%s\" in case you want to overwrite the values set \"Overwrite\" to true."), *BlendProfileName.ToString(), *Skeleton->GetPathName());
         return false;
     }
 
@@ -947,18 +947,32 @@ bool UTTToolboxBlueprintLibrary::AddUnweightedBone(const TArray<FTTNewBone_BP>& 
           }
         
           skeletalMeshLODModel.RequiredBones.Add(newBoneIndex);
-        
+#if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION <= 3
           if (skeletalMesh->IsLODImportedDataBuildAvailable(LODIdx) && !skeletalMesh->IsLODImportedDataEmpty(LODIdx))
+#elif ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION > 3
+          if (skeletalMesh->HasMeshDescription(LODIdx))
+#endif
           {
             FSkeletalMeshImportData skeletalMeshImportData;
+#if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION <= 3
             skeletalMesh->LoadLODImportedData(LODIdx, skeletalMeshImportData);
+#elif ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION > 3
+            if (const FMeshDescription* MeshDescription = skeletalMesh->GetMeshDescription(LODIdx))
+            {
+              skeletalMeshImportData = FSkeletalMeshImportData::CreateFromMeshDescription(*MeshDescription);
+            }
+#endif
         
             skeletalMeshImportData.RefBonesBinary[parentBoneIndex].NumChildren++;
             const SkeletalMeshImportData::FJointPos NewRootPos = { FTransform3f::Identity, 1.f, 100.f, 100.f, 100.f };
             const SkeletalMeshImportData::FBone bone = { newBone.NewBoneName.ToString(), 0, /*NumChildren*/0, parentBoneIndex, NewRootPos };
             skeletalMeshImportData.RefBonesBinary.Add(bone);
-        
+
+#if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION <= 3
             skeletalMesh->SaveLODImportedData(LODIdx, skeletalMeshImportData);
+#elif ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION > 3
+            skeletalMesh->CommitMeshDescription(LODIdx);
+#endif
           }
           else
           {
@@ -1234,10 +1248,21 @@ bool UTTToolboxBlueprintLibrary::AddRootBone(USkeleton* Skeleton)
         }
 
         // adapt LOD sections
+#if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION <= 3
         if (skeletalMesh->IsLODImportedDataBuildAvailable(LODIndex) && !skeletalMesh->IsLODImportedDataEmpty(LODIndex))
+#elif ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION > 3
+        if (skeletalMesh->HasMeshDescription(LODIndex))
+#endif
         {
           FSkeletalMeshImportData skeletalMeshImportData;
+#if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION <= 3
           skeletalMesh->LoadLODImportedData(LODIndex, skeletalMeshImportData);
+#elif ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION > 3
+          if (const FMeshDescription* MeshDescription = skeletalMesh->GetMeshDescription(LODIndex))
+          {
+            skeletalMeshImportData = FSkeletalMeshImportData::CreateFromMeshDescription(*MeshDescription);
+          }
+#endif
 
           // increase parent indices to sucessfully add the new root bone
           int32 numRootBoneChilds = 0;
@@ -1272,7 +1297,11 @@ bool UTTToolboxBlueprintLibrary::AddRootBone(USkeleton* Skeleton)
             UE_LOG(LogTemp, Warning, TEXT("AlternateInfluences are currently not supported."));
           }
 
+#if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION <= 3
           skeletalMesh->SaveLODImportedData(LODIndex, skeletalMeshImportData);
+#elif ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION > 3
+          skeletalMesh->CommitMeshDescription(LODIndex);
+#endif
         }
         else
         {
@@ -1507,10 +1536,12 @@ bool UTTToolboxBlueprintLibrary::AddIKBoneChains(UIKRigDefinition* IKRigDefiniti
 
 #if ENGINE_MAJOR_VERSION ==	5 &&  ENGINE_MINOR_VERSION < 1
     ikRigController->AddRetargetChain(boneChain.ChainName, boneChain.StartBone, boneChain.EndBone);
-#elif ENGINE_MAJOR_VERSION ==	5 && (ENGINE_MINOR_VERSION >= 1 && ENGINE_MINOR_VERSION <= 2)
+#elif ENGINE_MAJOR_VERSION ==	5 && (ENGINE_MINOR_VERSION == 1 || ENGINE_MINOR_VERSION == 2)
     ikRigController->AddRetargetChain({ boneChain.ChainName, boneChain.StartBone, boneChain.EndBone });
-#elif ENGINE_MAJOR_VERSION ==	5 && (ENGINE_MINOR_VERSION >= 3)
-    ikRigController->AddRetargetChain({boneChain.ChainName, boneChain.StartBone, boneChain.EndBone, boneChain.IKGoalName});
+#elif ENGINE_MAJOR_VERSION ==	5 && (ENGINE_MINOR_VERSION == 3)
+    ikRigController->AddRetargetChain({ boneChain.ChainName, boneChain.StartBone, boneChain.EndBone, boneChain.IKGoalName });
+#elif ENGINE_MAJOR_VERSION ==	5 && (ENGINE_MINOR_VERSION == 4)
+    ikRigController->AddRetargetChain(boneChain.ChainName, boneChain.StartBone, boneChain.EndBone, boneChain.IKGoalName);
 #endif
 
   }
