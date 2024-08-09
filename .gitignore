@@ -74,3 +74,4 @@ DerivedDataCache/*
 Plugins/*/Binaries/*
 Plugins/*/Intermediate/Build/*
 /_build
+/zz_packaging/*
