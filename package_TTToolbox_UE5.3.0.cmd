@@ -14,7 +14,7 @@ call "%EngineDirectory%\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=
 set pathBefore=%cd%
 cd %PackageDir%
 
-tar.exe -a -cf %PluginName%_v%Plugin_Version%_UE%Engine%.%Version%_win64_release.zip %PluginName%_v%Plugin_Version%_UE%Engine%.%Version%_win64_release
+powershell -command "Compress-Archive -Force -Path '%PackageDir%\%PluginName%_v%Plugin_Version%_UE%Engine%.%Version%_win64_release' -DestinationPath '%PackageDir%\%PluginName%_v%Plugin_Version%_UE%Engine%.%Version%_win64_release.zip'"
 
 cd %pathBefore%
 
